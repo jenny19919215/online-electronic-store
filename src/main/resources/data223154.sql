@@ -1,0 +1,1 @@
+INSERT INTO product(productName,originalPrice,sellingPrice,stockNum,category,createUser) VALUES('pad','200.0','200.0',30,'B',2L);
