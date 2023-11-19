@@ -8,11 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+
 
 @DataJpaTest
 class ProductRepositoryTest {
@@ -24,13 +26,13 @@ class ProductRepositoryTest {
 
     @BeforeEach
     void setup(){
-        Product product = new Product("phone",100.0,100.0,20, Category.MOBILES, 123L) ;
+        Product product = new Product("apple",100.0,100.0,20, Category.MOBILES, 123L) ;
         entityManager.persist(product);
     }
 
     @Test
     void should_find_product_by_name() {
-        String name = "phone";
+        String name = "apple";
         Product product = repository.findByName(name);
         assertThat(product).isNotNull();
         assertThat(product.getProductName()).isEqualTo(name);
