@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -27,20 +28,16 @@ public class ProductService {
     }
 
     public Optional<Product> findProduct(Long id) {
-        LOGGER.info("start tp find product by id {}", id);
+        LOGGER.info("start to find product by id {}", id);
         return productRepository.findById(id);
     }
 
+    @Transactional
     public Product insertProduct(Product product) {
+        LOGGER.info("insert Product {}", product);
         if (productRepository.findByName(product.getProductName()) != null) {
             throw new ProductAlreadyExist("Product with name " + product.getProductName() + " already exist");
         }
-        return productRepository.save(product);
-    }
-
-    public Product updateProductWithDiscount(Product product, int percentage) {
-        LOGGER.info("update and save product {} discount percent to {}", product.getId(), percentage);
-        product.setDiscountPercentage(percentage);
         return productRepository.save(product);
     }
 
@@ -48,29 +45,30 @@ public class ProductService {
     public void updateProductDiscountInfo(Long productId, int percentage) {
         LOGGER.info("update product by Id {} with percentage {}", productId, percentage);
         Product product = findProduct(productId)
-                .orElseThrow(()->new ProductNotFoundException(String.format("product {} not exist",productId)));
+                .orElseThrow(() -> new ProductNotFoundException(String.format("product {} not exist", productId)));
         product.setDiscountPercentage(percentage);
         productRepository.save(product);
-    }
-
-    public void updateProductStockWithVersion(Long productId, int stockNum, int version){
-        LOGGER.info("update product by Id {} with stock number {} in version {}", productId, stockNum, version);
-      //  productRepository.updateProductStockWithVersion(productId,stockNum,0);
     }
 
 
     public void deleteProduct(Long productId) {
         LOGGER.info("delete product by Id {}", productId);
-
         if (findProduct(productId).isEmpty()) {
             throw new ProductNotFoundException("Product not found");
         }
-
         productRepository.deleteById(productId);
         LOGGER.info("product {} has been deleted", productId);
     }
+
     @Transactional
-    public void save(Product product) {
+    public void updateProductStockNum(Product product, int num) {
+        if (num < 0) {
+            throw new IllegalArgumentException("product stock num should be positive");
+        }
+        if (Objects.isNull(product)) {
+            throw new ProductNotFoundException("product to save is null");
+        }
+        product.setStockNum(num);
         productRepository.save(product);
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @ControllerAdvice
@@ -37,6 +38,13 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     public ResponseEntity<ErrorInfo> springHandleNotFound(NotEnoughStockException exception) {
         LOGGER.error("Not enough Stock", exception);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorInfo(exception.getMessage()));
+    }
+
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorInfo> springHandleNotFound(ResponseStatusException exception) {
+        LOGGER.error("response status exception ", exception);
+        return ResponseEntity.status(exception.getStatus()).body(new ErrorInfo(exception.getMessage()));
     }
 
 

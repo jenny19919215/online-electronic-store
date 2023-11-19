@@ -1,5 +1,6 @@
 package com.jennyz.electronicstore.Entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -23,9 +24,9 @@ public class BasketItem {
     private Double originalPrice;
 
     private int discountPercentage;
-
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate createTime = LocalDate.now();
-
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate updateTime;
 
 

@@ -1,12 +1,15 @@
 package com.jennyz.electronicstore.controller;
 
+import com.jennyz.electronicstore.Entity.BasketItem;
+import com.jennyz.electronicstore.dto.BasketInfo;
 import com.jennyz.electronicstore.service.BasketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-@Controller
+import java.util.List;
+
+@RestController
 @RequestMapping(value = "/basket")
 public class BasketController {
 
@@ -16,20 +19,20 @@ public class BasketController {
         this.basketService = basketService;
     }
 
-    @GetMapping("/{customerId}")
-    public ResponseEntity getAllBasketItems(@PathVariable Long customerId) {
-        return ResponseEntity.status(HttpStatus.OK).body(basketService.getItemsByCustomer(customerId));
+    @GetMapping("/{customerId}/items")
+    public ResponseEntity<List<BasketItem>> getAllBasketItems(@PathVariable Long customerId) {
+        return ResponseEntity.status(HttpStatus.OK).body(basketService.findBasketItemsByCustomer(customerId));
 
     }
 
-    @GetMapping("/{customerId}/totalprice")
-    public ResponseEntity<Double> getAllBasketItemsPrice(@PathVariable Long customerId) {
-        return ResponseEntity.status(HttpStatus.OK).body(basketService.calculateBasketPrice(customerId));
+    @GetMapping("/{customerId}/calculateBasket")
+    public ResponseEntity<BasketInfo> getAllBasketItemsPrice(@PathVariable Long customerId) {
+        return ResponseEntity.status(HttpStatus.OK).body(basketService.getBasketInfo(customerId));
 
     }
 
     @PostMapping("/{customerId}/add/{productId}")
-    public ResponseEntity createOrAddProductInBasket(@PathVariable Long productId, @PathVariable Long customerId, @RequestBody int number) throws InterruptedException {
+    public ResponseEntity createOrAddProductInBasket(@PathVariable Long productId, @PathVariable Long customerId, @RequestBody int number) {
         if (number <= 0) {
             throw new IllegalArgumentException("product count" + number + " to be added should >= 0");
         }
@@ -41,7 +44,7 @@ public class BasketController {
     @DeleteMapping("/{customerId}/delete/{productId}")
     public ResponseEntity deleteProductInBasket(@PathVariable Long productId, @PathVariable Long customerId, @RequestBody int number) {
         if (number <= 0) {
-            throw new IllegalArgumentException("product count should be positive");
+            throw new IllegalArgumentException("product count" + number + " to be deleted should >= 0");
         }
         basketService.removeProductFromBasket(productId, customerId, number);
         return ResponseEntity.status(HttpStatus.OK).build();
