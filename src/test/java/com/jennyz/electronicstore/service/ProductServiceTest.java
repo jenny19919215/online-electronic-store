@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -23,7 +24,7 @@ import static org.mockito.Mockito.*;
 @ContextConfiguration(classes = {ProductService.class})
 class ProductServiceTest {
 
-    public static final Product PRODUCT = new Product("iphone16", 100.0, 100.0, 20, Category.MOBILES, 123L);
+    public static Product PRODUCT;
     @SpyBean
     private ProductService productService;
 
@@ -33,8 +34,25 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
+        PRODUCT = new Product("iphone16", 100.0, 100.0, 20, Category.MOBILES, 123L);
         PRODUCT.setId(1234L);
     }
+
+
+    @Test
+    void find_product_id_null_with_exception_throw(){
+        Long id_null = null;
+        assertThatThrownBy(() -> productService.findProduct(id_null)).isInstanceOf(IllegalArgumentException.class);
+
+    }
+
+    @Test
+    void find_product_id_OK(){
+        Long id = PRODUCT.getId();
+        productService.findProduct(id);
+        verify(productRepository,times(1)).findById(id);
+    }
+
 
     @Test
     void product_insert_product_name_duplicated_failed() {
@@ -53,7 +71,7 @@ class ProductServiceTest {
 
         Product product = productService.insertProduct(newProduct);
         assertThat(product).isNotNull();
-        assertThat(product.getProductName()).isEqualTo(name);
+        assertThat(product).isEqualTo(newProduct);
     }
 
 
@@ -89,25 +107,30 @@ class ProductServiceTest {
     }
 
     @Test
-    void update_date_product_null_stock_num_ok() {
+    void update_date_product_stock_num_ok() {
         int num = 10;
         productService.updateProductStockNum(PRODUCT, num);
         verify(productRepository, times(1)).save(PRODUCT);
         assertThat(PRODUCT.getStockNum()).isEqualTo(num);
     }
 
-
+//FIXME
     @Test
     void delete_product_not_exist_failed() {
         Long idNotFound = 11111L;
-        when(productRepository.findById(idNotFound)).thenReturn(Optional.empty());
+        doThrow(EmptyResultDataAccessException.class).when(productRepository).deleteById(idNotFound);
         assertThatThrownBy(() -> productService.deleteProduct(idNotFound)).isInstanceOf(ProductNotFoundException.class);
+    }
+
+    @Test
+    void delete_product_id_is_null_failed() {
+        Long id_null = null;
+        assertThatThrownBy(() -> productService.deleteProduct(id_null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void delete_product_ok() {
         Long id = 1234L;
-        when(productRepository.findById(id)).thenReturn(Optional.of(PRODUCT));
         productService.deleteProduct(id);
         verify(productRepository, times(1)).deleteById(id);
     }

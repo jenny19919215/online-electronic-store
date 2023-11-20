@@ -34,7 +34,7 @@ public class BasketController {
     @PostMapping("/{customerId}/add/{productId}")
     public ResponseEntity createOrAddProductInBasket(@PathVariable Long productId, @PathVariable Long customerId, @RequestBody int number) {
         if (number <= 0) {
-            throw new IllegalArgumentException("product count" + number + " to be added should >= 0");
+            throw new IllegalArgumentException("product count " + number + " to be added should >= 0");
         }
         basketService.addProductInBasket(productId, customerId, number);
         return ResponseEntity.status(HttpStatus.OK).build();

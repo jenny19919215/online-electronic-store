@@ -79,7 +79,7 @@ class BasketServiceTest {
 
 
     @Test
-    void add_product_with_illegal_number_to_basket_failed() {
+    void add_product_with_number_more_than_stock_to_basket_failed() {
         int num = product_exist_with_discount.getStockNum() + 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         assertThatThrownBy(() -> basketService.addProductInBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(NotEnoughStockException.class);

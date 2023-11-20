@@ -6,6 +6,8 @@ import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -29,6 +31,9 @@ public class ProductService {
 
     public Optional<Product> findProduct(Long id) {
         LOGGER.info("start to find product by id {}", id);
+        if(id == null){
+            throw new IllegalArgumentException("product id must not be null");
+        }
         return productRepository.findById(id);
     }
 
@@ -53,15 +58,21 @@ public class ProductService {
 
     public void deleteProduct(Long productId) {
         LOGGER.info("delete product by Id {}", productId);
-        if (findProduct(productId).isEmpty()) {
+        if(productId == null){
+            throw new IllegalArgumentException("product id should not be null");
+        }
+
+        try {
+            productRepository.deleteById(productId);
+        }catch (EmptyResultDataAccessException ex){
             throw new ProductNotFoundException("Product not found");
         }
-        productRepository.deleteById(productId);
         LOGGER.info("product {} has been deleted", productId);
     }
 
     @Transactional
     public void updateProductStockNum(Product product, int num) {
+        LOGGER.info("update product by Id {} with stock num {}", product.getId(), num);
         if (num < 0) {
             throw new IllegalArgumentException("product stock num should be positive");
         }

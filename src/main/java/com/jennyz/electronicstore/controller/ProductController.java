@@ -14,10 +14,12 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/product")
+@RequestMapping(value = ProductController.API_BASE_PATH)
 public class ProductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
+
+    public static final String API_BASE_PATH="/product";
 
     private final ProductService productService;
 

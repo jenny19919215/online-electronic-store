@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,18 +16,21 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomGlobalExceptionHandler.class);
 
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler({Exception.class})
     public ResponseEntity<ErrorInfo> handleUnexpectedException(Exception exception) {
         LOGGER.error("Unexpected exception occurred", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorInfo(exception.getMessage()));
     }
 
 
-    @ExceptionHandler(ProductAlreadyExist.class)
-    public ResponseEntity<ErrorInfo> springHandleNotFound(ProductAlreadyExist exception) {
-        LOGGER.error("Product already exist ", exception);
+    @ExceptionHandler({ProductAlreadyExist.class, IllegalArgumentException.class})
+    public ResponseEntity<ErrorInfo> springHandleNotFound(RuntimeException exception) {
+        LOGGER.error("product already exist", exception);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorInfo(exception.getMessage()));
     }
+
+
+
 
     @ExceptionHandler({ProductNotFoundException.class, BasketItemNotFoundException.class})
     public ResponseEntity<ErrorInfo> springHandleNotFound(ProductNotFoundException exception) {
@@ -46,6 +50,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         LOGGER.error("response status exception ", exception);
         return ResponseEntity.status(exception.getStatus()).body(new ErrorInfo(exception.getMessage()));
     }
+
 
 
 }
