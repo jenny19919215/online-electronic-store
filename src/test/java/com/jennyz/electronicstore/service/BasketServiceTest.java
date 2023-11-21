@@ -1,8 +1,10 @@
 package com.jennyz.electronicstore.service;
 
 import com.jennyz.electronicstore.Entity.BasketItem;
+import com.jennyz.electronicstore.Entity.BasketItemId;
 import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.dto.BasketInfo;
+import com.jennyz.electronicstore.exception.BasketItemNotFoundException;
 import com.jennyz.electronicstore.exception.NotEnoughStockException;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.BasketItemRepository;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -59,7 +62,8 @@ class BasketServiceTest {
         product_exist_no_discount = new Product("laptop", 500.0, 500.0, 20, Category.MOBILES, 123L);
         product_exist_no_discount.setId(3L);
 
-        basketItem = new BasketItem(product_exist_with_discount.getId(), 1L, 5, product_exist_with_discount.getOriginalPrice(), product_exist_with_discount.getDiscountPercentage());
+        basketItem = new BasketItem(product_exist_with_discount.getId(), 1L, 5,
+                product_exist_with_discount.getOriginalPrice(), product_exist_with_discount.getDiscountPercentage());
 
     }
 
@@ -73,7 +77,7 @@ class BasketServiceTest {
     @Test
     void add_product_not_exist_to_basket_failed() {
         when(productService.findProduct(product_not_found.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> basketService.addProductInBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(() -> basketService.addItemsToBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(ProductNotFoundException.class);
 
     }
 
@@ -82,7 +86,7 @@ class BasketServiceTest {
     void add_product_with_number_more_than_stock_to_basket_failed() {
         int num = product_exist_with_discount.getStockNum() + 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
-        assertThatThrownBy(() -> basketService.addProductInBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(NotEnoughStockException.class);
+        assertThatThrownBy(() -> basketService.addItemsToBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(NotEnoughStockException.class);
 
     }
 
@@ -91,8 +95,9 @@ class BasketServiceTest {
         int num = 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.empty());
-        doThrow(OptimisticLockException.class).when(productService).updateProductStockNum(product_exist_with_discount, product_exist_with_discount.getStockNum() - num);
-        assertThatThrownBy(() -> basketService.addProductInBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(ResponseStatusException.class);
+        doThrow(OptimisticLockException.class).when(productService).updateProductStockNum(product_exist_with_discount
+                , product_exist_with_discount.getStockNum() - num);
+        assertThatThrownBy(() -> basketService.addItemsToBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(ResponseStatusException.class);
 
     }
 
@@ -102,18 +107,20 @@ class BasketServiceTest {
         int numToAdd = 2;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.empty());
-        //   doNothing().when(productService).updateProductStockNum(product_exist, product_exist.getStockNum() - numToAdd);
+        //   doNothing().when(productService).updateProductStockNum(product_exist, product_exist.getStockNum() -
+        //   numToAdd);
 
-        basketService.addProductInBasket(product_exist_with_discount.getId(), 1L, numToAdd);
+        basketService.addItemsToBasket(product_exist_with_discount.getId(), 1L, numToAdd);
 
-        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount, product_exist_with_discount.getStockNum() - numToAdd);
+        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount,
+                product_exist_with_discount.getStockNum() - numToAdd);
         verify(basketItemRepository, times(1)).save(any());
     }
 
     @Test
     void remove_product_not_exist_to_basket_failed() {
         when(productService.findProduct(product_not_found.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> basketService.removeProductFromBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(ProductNotFoundException.class);
+        assertThatThrownBy(() -> basketService.removeItemsFromBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(ProductNotFoundException.class);
 
     }
 
@@ -122,7 +129,7 @@ class BasketServiceTest {
         int num = basketItem.getProductCount() + 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.of(basketItem));
-        assertThatThrownBy(() -> basketService.removeProductFromBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> basketService.removeItemsFromBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("not enough basket items to be removed");
 
     }
@@ -132,8 +139,9 @@ class BasketServiceTest {
         int num = 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.of(basketItem));
-        doThrow(OptimisticLockException.class).when(productService).updateProductStockNum(product_exist_with_discount, product_exist_with_discount.getStockNum() + num);
-        assertThatThrownBy(() -> basketService.removeProductFromBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(ResponseStatusException.class);
+        doThrow(OptimisticLockException.class).when(productService).updateProductStockNum(product_exist_with_discount
+                , product_exist_with_discount.getStockNum() + num);
+        assertThatThrownBy(() -> basketService.removeItemsFromBasket(product_exist_with_discount.getId(), 1L, num)).isInstanceOf(ResponseStatusException.class);
 
     }
 
@@ -142,9 +150,11 @@ class BasketServiceTest {
         int num = basketItem.getProductCount();
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.of(basketItem));
-        basketService.removeProductFromBasket(product_exist_with_discount.getId(), 1L, num);
 
-        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount, product_exist_with_discount.getStockNum() + num);
+        basketService.removeItemsFromBasket(product_exist_with_discount.getId(), 1L, num);
+
+        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount,
+                product_exist_with_discount.getStockNum() + num);
         verify(basketItemRepository, times(1)).delete(any());
 
     }
@@ -154,12 +164,36 @@ class BasketServiceTest {
         int num = basketItem.getProductCount() - 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
         when(basketItemRepository.findById(any())).thenReturn(Optional.of(basketItem));
-        basketService.removeProductFromBasket(product_exist_with_discount.getId(), 1L, num);
 
-        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount, product_exist_with_discount.getStockNum() + num);
+        basketService.removeItemsFromBasket(product_exist_with_discount.getId(), 1L, num);
+
+        verify(productService, times(1)).updateProductStockNum(product_exist_with_discount,
+                product_exist_with_discount.getStockNum() + num);
         verify(basketItemRepository, times(1)).save(any());
 
     }
+
+    @Test
+    void delete_basket_item_by_null_id() {
+        assertThatThrownBy(() -> basketService.deleteBasketItemById(null)).isInstanceOf(IllegalArgumentException.class);
+    }
+    @Test
+    void delete_basket_item_by_id_not_exist() {
+        BasketItemId id = new BasketItemId(1234L,2456L);
+        doThrow(EmptyResultDataAccessException.class).when(basketItemRepository).deleteById(id);
+        assertThatThrownBy(() -> basketService.deleteBasketItemById(id)).isInstanceOf(BasketItemNotFoundException.class);
+    }
+
+
+    @Test
+    void delete_basket_item_by_id_ok() {
+        BasketItemId id = new BasketItemId(1L,1L);
+        doNothing().when(basketItemRepository).deleteById(id);
+        basketService.deleteBasketItemById(id);
+
+        verify(basketItemRepository,times(1)).deleteById(id);
+    }
+
 
     @Test
     void get_basket_is_empty() {
@@ -177,16 +211,18 @@ class BasketServiceTest {
     void get_basket_with_items() {
         product_exist_with_discount.setDiscountPercentage(20);
         Long customerId = 1L;
-        BasketItem basketItem_1 = new BasketItem(product_exist_with_discount.getId(), customerId, 3, product_exist_with_discount.getOriginalPrice(), product_exist_with_discount.getDiscountPercentage());
-        BasketItem basketItem_2 = new BasketItem(product_exist_no_discount.getId(), customerId, 4, product_exist_no_discount.getOriginalPrice(), product_exist_no_discount.getDiscountPercentage());
+        BasketItem basketItem_1 = new BasketItem(product_exist_with_discount.getId(), customerId, 3,
+                product_exist_with_discount.getOriginalPrice(), product_exist_with_discount.getDiscountPercentage());
+        BasketItem basketItem_2 = new BasketItem(product_exist_no_discount.getId(), customerId, 4,
+                product_exist_no_discount.getOriginalPrice(), product_exist_no_discount.getDiscountPercentage());
 
-        when(basketItemRepository.findAllByCustomerId(basketItem_1.getCustomerId())).thenReturn(Arrays.asList(basketItem_1,basketItem_2));
+        when(basketItemRepository.findAllByCustomerId(basketItem_1.getCustomerId())).thenReturn(Arrays.asList(basketItem_1, basketItem_2));
 
         BasketInfo basketInfo = basketService.getBasketInfo(customerId);
 
         assertThat(basketInfo).isNotNull();
         assertThat(basketInfo.getCustomerId()).isEqualTo(customerId);
-        assertThat(basketInfo.getBasketItemList()).isEqualTo(Arrays.asList(basketItem_1,basketItem_2));
+        assertThat(basketInfo.getBasketItemList()).isEqualTo(Arrays.asList(basketItem_1, basketItem_2));
         assertThat(basketInfo.getTotalPrice()).isEqualTo(2280.0);
 
 

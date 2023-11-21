@@ -11,6 +11,7 @@ import com.jennyz.electronicstore.repo.BasketItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,7 +35,8 @@ public class BasketService {
 
     private final ProductService productService;
 
-    public BasketService(BasketItemRepository basketItemRepository, ProductService productService, @Value("${electronicstore.basket.retry.time}") int retry) {
+    public BasketService(BasketItemRepository basketItemRepository, ProductService productService, @Value("$" +
+            "{electronicstore.basket.retry.time}") int retry) {
         this.basketItemRepository = basketItemRepository;
         this.productService = productService;
         this.maxRetries = retry;
@@ -47,18 +49,21 @@ public class BasketService {
     }
 
     @Transactional
-    public void addProductInBasket(Long productId, Long customerId, int numberToAdd) {
-        LOGGER.info("start to add {} product {} to basket for {}", numberToAdd, productId, customerId);
+    public BasketItem addItemsToBasket(Long productId, Long customerId, int numberToAdd) {
+        LOGGER.info("start to add {} product {} to basket for customer {}", numberToAdd, productId, customerId);
+        BasketItem basketItem = null;
         for (int i = 0; i < maxRetries; i++) {
             try {
-                Product product = productService.findProduct(productId).orElseThrow(() -> new ProductNotFoundException(String.format("product to add {} not exist", productId)));
+                Product product =
+                        productService.findProduct(productId).orElseThrow(() -> new ProductNotFoundException(
+                                String.format("product to add {} not exist", productId)));
 
                 int currentStock = product.getStockNum();
                 if (numberToAdd > currentStock) {
                     throw new NotEnoughStockException("Not enough stock exist");
                 }
                 productService.updateProductStockNum(product, currentStock - numberToAdd);
-                createOrUpdateBasketItemCount(product, customerId, numberToAdd);
+                basketItem = createOrUpdateBasketItem(product, customerId, numberToAdd);
                 break; // Break out of loop if successful
             } catch (OptimisticLockException e) {
                 LOGGER.error("Data conflict encountered when add product from basket", e);
@@ -68,27 +73,35 @@ public class BasketService {
                 }
             }
         }
+
+        return basketItem;
     }
 
 
     @Transactional
-    public void removeProductFromBasket(Long productId, Long customerId, int number) {
-        LOGGER.info("start to remove {} product {} from basket for {}", number, productId, customerId);
+    public BasketItem removeItemsFromBasket(Long productId, Long customerId, int numberToRemove) {
+        LOGGER.info("start to remove {} product {} from basket for {}", numberToRemove, productId, customerId);
+        BasketItem basketItemToReturn = null;
         for (int i = 0; i < maxRetries; i++) {
             try {
-                Product product = productService.findProduct(productId).orElseThrow(() -> new ProductNotFoundException(String.format("product to remove {} not exist", productId)));
-                BasketItem basketItem = basketItemRepository.findById(new BasketItemId(productId, customerId)).orElseThrow(() -> new BasketItemNotFoundException("basketItem not found"));
+                Product product =
+                        productService.findProduct(productId).orElseThrow(() ->
+                                new ProductNotFoundException(String.format("product to remove {} not " + "exist", productId)));
+                BasketItem basketItem =
+                        basketItemRepository.findById(new BasketItemId(productId, customerId)).orElseThrow(() ->
+                                new BasketItemNotFoundException("basketItem not found"));
+
                 int itemNum = basketItem.getProductCount();
-                if (itemNum < number) {
+                if (itemNum < numberToRemove) {
                     throw new IllegalArgumentException("not enough basket items to be removed");
                 }
 
-                productService.updateProductStockNum(product, product.getStockNum() + number);
-                if (itemNum == number) {
+                productService.updateProductStockNum(product, product.getStockNum() + numberToRemove);
+                if (itemNum == numberToRemove) {
                     basketItemRepository.delete(basketItem);
                 } else {
-                    basketItem.setProductCount(itemNum - number);
-                    basketItemRepository.save(basketItem);
+                    basketItem.setProductCount(itemNum - numberToRemove);
+                    basketItemToReturn = basketItemRepository.save(basketItem);
                 }
                 break; // Break out of loop if successful
             } catch (OptimisticLockException e) {
@@ -99,6 +112,7 @@ public class BasketService {
                 }
             }
         }
+        return basketItemToReturn;
     }
 
     public BasketInfo getBasketInfo(Long customerId) {
@@ -108,17 +122,6 @@ public class BasketService {
         }
         double totalPrice = getTotalPrice(list);
         return new BasketInfo(list, customerId, totalPrice);
-    }
-
-    public Double calculateBasketPrice(Long customerId) {
-        List<BasketItem> list = findBasketItemsByCustomer(customerId);
-        double totalPrice = 0.0;
-        if (Objects.isNull(list) || list.isEmpty()) {
-            return totalPrice;
-        }
-        totalPrice = getTotalPrice(list);
-        return totalPrice;
-
     }
 
     private double getTotalPrice(List<BasketItem> list) {
@@ -145,20 +148,36 @@ public class BasketService {
         return totalPrice;
     }
 
-    private void createOrUpdateBasketItemCount(Product product, Long customerId, int numberToAdd) {
+    public void deleteBasketItemById(BasketItemId basketItemId) {
+        LOGGER.info("delete basket item by Id {}", basketItemId);
+        if(basketItemId == null || basketItemId.getCustomerId() == null ||basketItemId.getProductId() == null ){
+            throw new IllegalArgumentException("basket item product id and basket item user id should not " +
+                    "be null");
+        }
+        try {
+            basketItemRepository.deleteById(basketItemId);
+        }catch (EmptyResultDataAccessException ex){
+            throw new BasketItemNotFoundException("basket item not found");
+        }
+        LOGGER.info("basket {} has been deleted", basketItemId);
+    }
+
+    private BasketItem createOrUpdateBasketItem(Product product, Long customerId, int numberToAdd) {
         Long productId = product.getId();
         Optional<BasketItem> basketItem = basketItemRepository.findById(new BasketItemId(productId, customerId));
-        BasketItem basketItemToSave;
+        BasketItem newBasketItem;
         if (basketItem.isPresent()) {
-            basketItemToSave = basketItem.get();
-            basketItemToSave.setProductCount(basketItemToSave.getProductCount() + numberToAdd);
-            basketItemToSave.setOriginalPrice(product.getOriginalPrice());
-            basketItemToSave.setDiscountPercentage(product.getDiscountPercentage());
-            basketItemToSave.setUpdateTime(LocalDate.now());
+            newBasketItem = basketItem.get();
+            newBasketItem.setProductCount(newBasketItem.getProductCount() + numberToAdd);
+            newBasketItem.setOriginalPrice(product.getOriginalPrice());
+            newBasketItem.setDiscountPercentage(product.getDiscountPercentage());
+            newBasketItem.setUpdateTime(LocalDate.now());
 
         } else {
-            basketItemToSave = new BasketItem(productId, customerId, numberToAdd, product.getOriginalPrice(), product.getDiscountPercentage());
+            newBasketItem = new BasketItem(productId, customerId, numberToAdd, product.getOriginalPrice(),
+                    product.getDiscountPercentage());
         }
-        basketItemRepository.save(basketItemToSave);
+        return basketItemRepository.save(newBasketItem);
     }
+
 }

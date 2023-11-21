@@ -3,6 +3,9 @@ package com.jennyz.electronicstore;
 import com.jennyz.electronicstore.utils.Category;
 import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.repo.ProductRepository;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -22,6 +25,15 @@ public class ElectronicStoreApplication {
 			Product product = new Product("phone",100.0,100.0,20, Category.MOBILES, 1L) ;
 			productRepository.save(product);
 		};
+	}
+
+	@Bean
+	public OpenAPI customOpenAPI(@Value("${onlinestore.api.name}") String name,
+								 @Value("${onlinestore.api.version}") String version) {
+		return new OpenAPI()
+				.info(new Info()
+						.title(name)
+						.version(version));
 	}
 
 }

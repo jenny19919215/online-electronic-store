@@ -6,13 +6,18 @@ import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.utils.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
@@ -72,6 +77,37 @@ class BasketItemRepositoryTest {
 
         assertThat(item).isNotNull();
         basketItemRepository.delete(item);
+
+        assertThat(basketItemRepository.findById(id)).isEmpty();
+
+    }
+
+    @Test
+    void test_delete_basket_By_Id_null_failed() {
+        assertThatThrownBy(()->basketItemRepository.deleteById(null)).isInstanceOf(InvalidDataAccessApiUsageException.class);
+    }
+
+    @Test
+    void test_delete_basket_By_Id_not_exist_failed() {
+        BasketItemId id = new BasketItemId(123L,321L);
+        assertThat(basketItemRepository.findById(id).isEmpty()).isTrue();
+        assertThatThrownBy(()->basketItemRepository.deleteById(new BasketItemId(123L,321L))).isInstanceOf(EmptyResultDataAccessException.class);
+    }
+
+    @Test
+    void test_delete_basket_null_failed() {
+        assertThatThrownBy(()->basketItemRepository.delete(null)).isInstanceOf(InvalidDataAccessApiUsageException.class);
+    }
+
+
+    @Test
+    void test_delete_basket_By_Id_ok() {
+        BasketItemId id = new BasketItemId(1L,1L);
+
+        BasketItem item= basketItemRepository.findById(id).get();
+
+        assertThat(item).isNotNull();
+        basketItemRepository.deleteById(id);
 
         assertThat(basketItemRepository.findById(id)).isEmpty();
 

@@ -72,13 +72,14 @@ public class ProductService {
 
     @Transactional
     public void updateProductStockNum(Product product, int num) {
-        LOGGER.info("update product by Id {} with stock num {}", product.getId(), num);
-        if (num < 0) {
-            throw new IllegalArgumentException("product stock num should be positive");
-        }
+        LOGGER.info("update product {} with stock num {}", product, num);
         if (Objects.isNull(product)) {
             throw new ProductNotFoundException("product to save is null");
         }
+        if (num < 0) {
+            throw new IllegalArgumentException("product stock num should be positive");
+        }
+
         product.setStockNum(num);
         productRepository.save(product);
     }

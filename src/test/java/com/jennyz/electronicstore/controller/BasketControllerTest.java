@@ -1,14 +1,17 @@
 package com.jennyz.electronicstore.controller;
 
 import com.jennyz.electronicstore.Entity.BasketItem;
+import com.jennyz.electronicstore.dto.BasketInfo;
 import com.jennyz.electronicstore.repo.BasketItemRepository;
 import com.jennyz.electronicstore.repo.ProductRepository;
 import com.jennyz.electronicstore.service.BasketService;
 import com.jennyz.electronicstore.service.ProductService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -17,13 +20,11 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BasketController.class)
 class BasketControllerTest {
@@ -57,7 +58,7 @@ class BasketControllerTest {
                         "/json"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.*", isA(ArrayList.class)))
+                .andExpect(jsonPath("$.*").isArray())
                 .andExpect(jsonPath("$.*", hasSize(1)))
                 .andExpect(jsonPath("$[0].customerId").value(id.toString()));
 
@@ -67,9 +68,9 @@ class BasketControllerTest {
     void add_illegal_basket_item_number_in_basket_throw_exception() throws Exception {
         Integer number = -1;
         Long id = 1L;
-        doNothing().when(basketService).addProductInBasket(anyLong(),anyLong(),anyInt());
+        when(basketService.addItemsToBasket(anyLong(),anyLong(),anyInt())).thenReturn(new BasketItem());
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/add/"+ id).contentType("application" +
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/add-to-basket/"+ id).contentType("application" +
                         "/json")
                         .content(number.toString()))
                 .andDo(print())
@@ -81,23 +82,30 @@ class BasketControllerTest {
     void add_illegal_basket_item_number_in_basket_ok() throws Exception {
         Integer number = 1;
         Long id = 1L;
-        doNothing().when(basketService).addProductInBasket(anyLong(),anyLong(),anyInt());
+        when(basketService.addItemsToBasket(anyLong(),anyLong(),anyInt())).thenReturn(new BasketItem(id,id,number,
+               40.0, 0));
 
-        this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/add/"+ id).contentType("application" +
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/add-to-basket/"+ id).contentType("application" +
                                 "/json")
                         .content(number.toString()))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productId").value("1"))
+                .andExpect(jsonPath("$.customerId").value("1"))
+                .andExpect(jsonPath("$.productCount").value("1"))
+                .andExpect(jsonPath("$.originalPrice").value("40.0"))
+                .andExpect(jsonPath("$.discountPercentage").value("0"));
     }
 
 
     @Test
-    void delete_illegal_basket_item_number_from_basket_throw_exception() throws Exception {
+    void remove_illegal_basket_item_number_from_basket_throw_exception() throws Exception {
         Integer number = -1;
         Long id = 1L;
-        doNothing().when(basketService).removeProductFromBasket(anyLong(),anyLong(),anyInt());
+        when(basketService.removeItemsFromBasket(anyLong(),anyLong(),anyInt())).thenReturn(null);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/basket/"+id+"/delete/"+ id).contentType("application" +
+        this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/remove-from-basket/"+ id).contentType(
+                "application" +
                                 "/json")
                         .content(number.toString()))
                 .andDo(print())
@@ -106,15 +114,53 @@ class BasketControllerTest {
     }
 
     @Test
-    void delete_illegal_basket_item_number_from_basket_ok() throws Exception {
+    void remove_basket_item_number_from_basket_ok() throws Exception {
         Integer number = 1;
         Long id = 1L;
-        doNothing().when(basketService).removeProductFromBasket(anyLong(),anyLong(),anyInt());
+        when(basketService.removeItemsFromBasket(anyLong(),anyLong(),anyInt())).thenReturn(null);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.delete("/basket/"+id+"/delete/"+ id).contentType("application" +
+        MockHttpServletResponse response = this.mockMvc.perform(MockMvcRequestBuilders.post("/basket/"+id+"/remove" +
+                                "-from-basket/"+ id).contentType(
+                "application" +
                                 "/json")
                         .content(number.toString()))
                 .andDo(print())
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn().getResponse();
+        assertEquals("",response.getContentAsString());
     }
+
+    @Test
+    void delete_basket_item_basket_ok() throws Exception {
+        Integer number = 1;
+        Long id = 1L;
+        doNothing().when(basketService).deleteBasketItemById(any());
+
+        this.mockMvc.perform(MockMvcRequestBuilders
+                        .delete("/basket/"+id+"/delete/"+ id).contentType(
+                                "application" +
+                                        "/json"))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+    }
+
+
+
+    @Test
+    void calculate_empty_basket_info() throws Exception {
+        Long customerId = 1L;
+        BasketInfo basketInfo = new BasketInfo(new ArrayList<>(), customerId,0.0);
+        when(basketService.getBasketInfo(customerId)).thenReturn(basketInfo);
+
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/basket/"+customerId+"/calculateBasket")
+                        .contentType("application" +
+                                "/json"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.basketItemList", Matchers.empty() ))
+                .andExpect(jsonPath("$.customerId").value("1"))
+                .andExpect(jsonPath("$.totalPrice").value("0.0"));
+    }
+
 }

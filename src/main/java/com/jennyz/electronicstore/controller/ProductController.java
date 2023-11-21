@@ -4,6 +4,8 @@ import com.jennyz.electronicstore.utils.Category;
 import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.dto.ProductDTO;
 import com.jennyz.electronicstore.service.ProductService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -19,7 +21,7 @@ public class ProductController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProductController.class);
 
-    public static final String API_BASE_PATH="/product";
+    public static final String API_BASE_PATH = "/product";
 
     private final ProductService productService;
 
@@ -30,6 +32,7 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<Product>> getProductList() {
+        LOGGER.info("find all products");
         return ResponseEntity.status(HttpStatus.OK)
                 .body(productService.findAllProducts());
 
@@ -37,7 +40,9 @@ public class ProductController {
 
     @PostMapping("/create")
     public ResponseEntity<Product> createProduct(@RequestBody @Valid ProductDTO productDTO) {
-        Product newProduct = new Product(productDTO.productName(), productDTO.originalPrice(), productDTO.sellingPrice(),
+        LOGGER.info("create new product {}", productDTO);
+        Product newProduct = new Product(productDTO.productName(), productDTO.originalPrice(),
+                productDTO.sellingPrice(),
                 productDTO.stockNum(), Category.valueOf(productDTO.category()), productDTO.createUser());
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -52,8 +57,11 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.OK).body(productId);
     }
 
+    @Operation(summary = "Update product discount information by id", description = "Returns http status")
     @PutMapping("/update/{productId}")
-    public ResponseEntity updateProductPromoInfo(@PathVariable Long productId,  @RequestBody Integer percentageToReduce) {
+    public ResponseEntity updateProductPromoInfo(@PathVariable Long productId, @RequestBody @Parameter(name =
+            "discountPercentage", description = "percentage to be applied from 0 to 100", example = "50")
+    Integer percentageToReduce) {
         LOGGER.info("update product {} discount to {} percent", productId, percentageToReduce);
 
         productService.updateProductDiscountInfo(productId, percentageToReduce);

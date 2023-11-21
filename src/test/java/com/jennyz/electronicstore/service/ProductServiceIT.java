@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-public class ProductServiceIT {
+class ProductServiceIT {
 
     @Autowired
     private ProductService productService;
