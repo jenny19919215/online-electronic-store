@@ -1,6 +1,6 @@
 package com.jennyz.electronicstore.service;
 
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.ProductRepository;
 import com.jennyz.electronicstore.utils.Category;
@@ -56,12 +56,46 @@ class ProductServiceIT {
     @Test
     void test_update_product_discount_info_ok() {
         productService.updateProductDiscountInfo(id, 46);
-
         Product p = productService.findProduct(id).get();
         assertThat(p.getDiscountPercentage()).isEqualTo(46);
+    }
+
+    @Test
+    void test_delete_product_ok() {
+        List<Product> productList = productService.findAllProducts();
+        assertThat(productList).isNotEmpty();
+
+        Product product = productList.get(0);
+        Long id = product.getId();
+
+        productService.deleteProduct(id);
+        assertThat(productService.findProduct(id)).isEmpty();
 
     }
 
-    //TODO  deleteProduct  updateProductStockNum
+    @Test
+    void test_delete_product_not_exist_ok() {
+        Long id_not_exist = 123665L;
+
+        assertThat(productService.findProduct(id_not_exist)).isEmpty();
+        assertThatThrownBy(() -> productService.deleteProduct(id_not_exist)).isInstanceOf(ProductNotFoundException.class);
+
+    }
+
+    @Test
+    void update_product_num_ok() {
+        List<Product> productList = productService.findAllProducts();
+        assertThat(productList).isNotEmpty();
+
+        Product product = productList.get(0);
+        Long id = product.getId();
+        int stock = product.getStockNum();
+
+        productService.updateProductStockNum(product, stock + 20);
+
+        assertThat(productService.findProduct(id).get().getStockNum()).isEqualTo(stock + 20);
+
+    }
+
 
 }

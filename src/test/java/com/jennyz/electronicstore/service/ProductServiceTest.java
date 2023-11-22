@@ -1,6 +1,6 @@
 package com.jennyz.electronicstore.service;
 
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.exception.ProductAlreadyExist;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.ProductRepository;
@@ -16,7 +16,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 

@@ -1,13 +1,12 @@
 package com.jennyz.electronicstore.service;
 
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.exception.ProductAlreadyExist;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.ProductRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -50,7 +49,7 @@ public class ProductService {
     public void updateProductDiscountInfo(Long productId, int percentage) {
         LOGGER.info("update product by Id {} with percentage {}", productId, percentage);
         Product product = findProduct(productId)
-                .orElseThrow(() -> new ProductNotFoundException(String.format("product {} not exist", productId)));
+                .orElseThrow(() -> new ProductNotFoundException(String.format("product %s not exist", productId)));
         product.setDiscountPercentage(percentage);
         productRepository.save(product);
     }

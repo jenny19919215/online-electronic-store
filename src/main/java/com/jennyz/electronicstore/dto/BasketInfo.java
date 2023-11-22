@@ -1,6 +1,6 @@
 package com.jennyz.electronicstore.dto;
 
-import com.jennyz.electronicstore.Entity.BasketItem;
+import com.jennyz.electronicstore.entity.BasketItem;
 import lombok.Data;
 
 import java.util.List;

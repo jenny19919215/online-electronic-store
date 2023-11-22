@@ -1,9 +1,9 @@
 package com.jennyz.electronicstore.controller;
 
-import com.jennyz.electronicstore.utils.Category;
-import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.dto.ProductDTO;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.service.ProductService;
+import com.jennyz.electronicstore.utils.Category;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Update product discount information by id", description = "Returns http status")
-    @PutMapping("/update/{productId}")
+    @PutMapping("/{productId}/update-discount")
     public ResponseEntity updateProductPromoInfo(@PathVariable Long productId, @RequestBody @Parameter(name =
             "discountPercentage", description = "percentage to be applied from 0 to 100", example = "50")
     Integer percentageToReduce) {

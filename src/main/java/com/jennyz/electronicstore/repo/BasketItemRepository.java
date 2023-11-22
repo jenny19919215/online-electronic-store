@@ -1,9 +1,7 @@
 package com.jennyz.electronicstore.repo;
 
-import com.jennyz.electronicstore.Entity.Basket;
-import com.jennyz.electronicstore.Entity.BasketItem;
-import com.jennyz.electronicstore.Entity.BasketItemId;
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.entity.BasketItem;
+import com.jennyz.electronicstore.entity.BasketItemId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

@@ -1,8 +1,10 @@
 package com.jennyz.electronicstore.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.configuration.WebSecirutyConfig;
 import com.jennyz.electronicstore.dto.ProductDTO;
+import com.jennyz.electronicstore.entity.Product;
+import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.ProductRepository;
 import com.jennyz.electronicstore.service.ProductService;
 import com.jennyz.electronicstore.utils.Category;
@@ -10,27 +12,23 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
+@Import(WebSecirutyConfig.class)
 class ProductControllerTest {
 
     @MockBean
@@ -51,11 +49,12 @@ class ProductControllerTest {
         product.setId(12345678L);
         when(productService.findAllProducts()).thenReturn(List.of(product));
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get(ProductController.API_BASE_PATH).contentType("application" +
-                "/json"))
+        this.mockMvc.perform(MockMvcRequestBuilders.get(ProductController.API_BASE_PATH).contentType(
+                        "application" +
+                                "/json"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.*", isA(ArrayList.class)))
+                .andExpect(jsonPath("$.*").isArray())
                 .andExpect(jsonPath("$.*", hasSize(1)))
                 .andExpect(jsonPath("$[0].id", is(12345678)));
     }
@@ -71,6 +70,7 @@ class ProductControllerTest {
 
 
         this.mockMvc.perform(MockMvcRequestBuilders.post(ProductController.API_BASE_PATH + "/create")
+                        .with(SecurityMockMvcRequestPostProcessors.httpBasic("admin", "123456"))
                 .contentType("application/json")
                 .content(serializedList))
                 .andDo(print())
@@ -94,7 +94,8 @@ class ProductControllerTest {
 
 
         this.mockMvc.perform(MockMvcRequestBuilders
-                .post(ProductController.API_BASE_PATH + "/create")
+                        .post(ProductController.API_BASE_PATH + "/create")
+                        .with(SecurityMockMvcRequestPostProcessors.httpBasic("admin", "123456"))
                 .contentType("application/json")
                         .content(serializedList))
                 .andDo(print())
@@ -110,6 +111,7 @@ class ProductControllerTest {
 
         this.mockMvc.perform(MockMvcRequestBuilders
                         .delete(ProductController.API_BASE_PATH + "/" + id)
+                        .with(SecurityMockMvcRequestPostProcessors.httpBasic("admin", "123456"))
                         .contentType("application/json"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -118,13 +120,30 @@ class ProductControllerTest {
     }
 
     @Test
+    void update_product_not_exist_promotion_failed() throws Exception {
+        Long id = 1234L;
+        Integer percentage = 30;
+        doThrow(ProductNotFoundException.class).when(productService).updateProductDiscountInfo(id, percentage);
+
+        this.mockMvc.perform(MockMvcRequestBuilders
+                        .put(ProductController.API_BASE_PATH + "/" + id + "/update-discount")
+                        .with(SecurityMockMvcRequestPostProcessors.httpBasic("admin", "123456"))
+                        .contentType("application/json")
+                        .content(percentage.toString()))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(result -> assertTrue(result.getResolvedException() instanceof ProductNotFoundException));
+    }
+
+    @Test
     void update_product_promotion_ok() throws Exception {
         Long id = 1234L;
         Integer percentage = 30;
-        doNothing().when(productService).updateProductDiscountInfo(id,percentage);
+        doNothing().when(productService).updateProductDiscountInfo(id, percentage);
 
         this.mockMvc.perform(MockMvcRequestBuilders
-                        .put(ProductController.API_BASE_PATH + "/update/" + id)
+                        .put(ProductController.API_BASE_PATH + "/" + id + "/update-discount")
+                        .with(SecurityMockMvcRequestPostProcessors.httpBasic("admin", "123456"))
                         .contentType("application/json")
                         .content(percentage.toString()))
                 .andDo(print())

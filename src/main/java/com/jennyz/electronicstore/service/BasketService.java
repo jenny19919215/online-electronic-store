@@ -1,9 +1,9 @@
 package com.jennyz.electronicstore.service;
 
-import com.jennyz.electronicstore.Entity.BasketItem;
-import com.jennyz.electronicstore.Entity.BasketItemId;
-import com.jennyz.electronicstore.Entity.Product;
 import com.jennyz.electronicstore.dto.BasketInfo;
+import com.jennyz.electronicstore.entity.BasketItem;
+import com.jennyz.electronicstore.entity.BasketItemId;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.exception.BasketItemNotFoundException;
 import com.jennyz.electronicstore.exception.NotEnoughStockException;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
@@ -11,7 +11,6 @@ import com.jennyz.electronicstore.repo.BasketItemRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,14 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 public class BasketService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BasketService.class);
     private final int maxRetries;
-    private final ReentrantLock reentrantLock = new ReentrantLock();
     private final BasketItemRepository basketItemRepository;
 
     private final ProductService productService;
@@ -56,7 +53,7 @@ public class BasketService {
             try {
                 Product product =
                         productService.findProduct(productId).orElseThrow(() -> new ProductNotFoundException(
-                                String.format("product to add {} not exist", productId)));
+                                String.format("product to add %s not exist", productId)));
 
                 int currentStock = product.getStockNum();
                 if (numberToAdd > currentStock) {
@@ -146,20 +143,6 @@ public class BasketService {
 
         }
         return totalPrice;
-    }
-
-    public void deleteBasketItemById(BasketItemId basketItemId) {
-        LOGGER.info("delete basket item by Id {}", basketItemId);
-        if(basketItemId == null || basketItemId.getCustomerId() == null ||basketItemId.getProductId() == null ){
-            throw new IllegalArgumentException("basket item product id and basket item user id should not " +
-                    "be null");
-        }
-        try {
-            basketItemRepository.deleteById(basketItemId);
-        }catch (EmptyResultDataAccessException ex){
-            throw new BasketItemNotFoundException("basket item not found");
-        }
-        LOGGER.info("basket {} has been deleted", basketItemId);
     }
 
     private BasketItem createOrUpdateBasketItem(Product product, Long customerId, int numberToAdd) {

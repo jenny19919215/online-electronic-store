@@ -1,14 +1,12 @@
 package com.jennyz.electronicstore.controller;
 
-import com.jennyz.electronicstore.Entity.BasketItem;
-import com.jennyz.electronicstore.Entity.BasketItemId;
 import com.jennyz.electronicstore.dto.BasketInfo;
+import com.jennyz.electronicstore.entity.BasketItem;
 import com.jennyz.electronicstore.service.BasketService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @RestController
@@ -51,14 +49,6 @@ public class BasketController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(basketService.removeItemsFromBasket(productId, customerId,
                 number));
-    }
-
-
-    @DeleteMapping("/{customerId}/delete/{productId}")
-    public ResponseEntity deleteItemsInBasket1(@PathVariable @NotNull Long customerId,
-                                               @PathVariable @NotNull Long productId) {
-        basketService.deleteBasketItemById(new BasketItemId(productId, customerId));
-        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 

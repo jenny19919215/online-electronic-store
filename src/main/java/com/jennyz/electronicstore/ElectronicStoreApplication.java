@@ -1,8 +1,8 @@
 package com.jennyz.electronicstore;
 
-import com.jennyz.electronicstore.utils.Category;
-import com.jennyz.electronicstore.Entity.Product;
+import com.jennyz.electronicstore.entity.Product;
 import com.jennyz.electronicstore.repo.ProductRepository;
+import com.jennyz.electronicstore.utils.Category;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +10,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 @SpringBootApplication
 public class ElectronicStoreApplication {

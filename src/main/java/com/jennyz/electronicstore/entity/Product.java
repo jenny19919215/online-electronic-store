@@ -1,4 +1,4 @@
-package com.jennyz.electronicstore.Entity;
+package com.jennyz.electronicstore.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.jennyz.electronicstore.utils.Category;

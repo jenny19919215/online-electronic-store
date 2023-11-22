@@ -1,12 +1,9 @@
 package com.jennyz.electronicstore.repo;
 
-import com.jennyz.electronicstore.Entity.BasketItem;
-import com.jennyz.electronicstore.Entity.BasketItemId;
-import com.jennyz.electronicstore.Entity.Product;
-import com.jennyz.electronicstore.utils.Category;
+import com.jennyz.electronicstore.entity.BasketItem;
+import com.jennyz.electronicstore.entity.BasketItemId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
@@ -17,7 +14,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
