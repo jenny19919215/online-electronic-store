@@ -10,7 +10,7 @@ file [Bullish Technical Assessment (Take home).pdf](./Bullish%20Technical%20Asse
 
 * Run all the unit tests and integration tests
     ```
-   mvn clean install
+   mvn clean test
     ```
 
 * Launch the project
