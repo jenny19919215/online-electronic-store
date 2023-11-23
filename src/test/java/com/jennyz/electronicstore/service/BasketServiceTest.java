@@ -117,9 +117,19 @@ class BasketServiceTest {
     }
 
     @Test
-    void remove_product_not_exist_to_basket_failed() {
+    void remove_basket_item_whose_related_product_not_exist_but_basket_Item_to_be_removed_ok() {
         when(productService.findProduct(product_not_found.getId())).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> basketService.removeItemsFromBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(ProductNotFoundException.class);
+
+        int num = basketItem.getProductCount();
+        when(productService.findProduct(product_not_found.getId())).thenReturn(Optional.empty());
+        when(basketItemRepository.findById(any())).thenReturn(Optional.of(basketItem));
+
+        basketService.removeItemsFromBasket(product_exist_with_discount.getId(), 1L, num);
+
+        verify(productService, times(0)).updateProductStockNum(any(),
+                anyInt());
+        verify(basketItemRepository, times(1)).delete(any());
+
 
     }
 

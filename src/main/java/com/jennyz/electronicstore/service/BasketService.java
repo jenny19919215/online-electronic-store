@@ -81,9 +81,6 @@ public class BasketService {
         BasketItem basketItemToReturn = null;
         for (int i = 0; i < maxRetries; i++) {
             try {
-                Product product =
-                        productService.findProduct(productId).orElseThrow(() ->
-                                new ProductNotFoundException(String.format("product to remove {} not " + "exist", productId)));
                 BasketItem basketItem =
                         basketItemRepository.findById(new BasketItemId(productId, customerId)).orElseThrow(() ->
                                 new BasketItemNotFoundException("basketItem not found"));
@@ -92,8 +89,15 @@ public class BasketService {
                 if (itemNum < numberToRemove) {
                     throw new IllegalArgumentException("not enough basket items to be removed");
                 }
+                Optional<Product> productOpt =
+                        productService.findProduct(productId);
+                if (productOpt.isEmpty()) {
+                    LOGGER.warn("product {} not exist but item exist for customer {}", productId, customerId);
+                } else {
+                    productService.updateProductStockNum(productOpt.get(),
+                            productOpt.get().getStockNum() + numberToRemove);
+                }
 
-                productService.updateProductStockNum(product, product.getStockNum() + numberToRemove);
                 if (itemNum == numberToRemove) {
                     basketItemRepository.delete(basketItem);
                 } else {
