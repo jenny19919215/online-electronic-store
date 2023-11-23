@@ -135,35 +135,19 @@ class BasketControllerTest {
         assertEquals("",response.getContentAsString());
     }
 
-   /* @Test
-    void delete_basket_item_basket_ok() throws Exception {
-        Integer number = 1;
-        Long id = 1L;
-        doNothing().when(basketService).deleteBasketItemById(any());
-
-        this.mockMvc.perform(MockMvcRequestBuilders
-                        .delete("/basket/"+id+"/delete/"+ id).contentType(
-                                "application" +
-                                        "/json"))
-                .andDo(print())
-                .andExpect(status().isOk());
-
-    }
-*/
-
 
     @Test
-    void calculate_empty_basket_info() throws Exception {
+    void calculate_basket_info() throws Exception {
         Long customerId = 1L;
-        BasketInfo basketInfo = new BasketInfo(new ArrayList<>(), customerId,0.0);
+        BasketInfo basketInfo = new BasketInfo(new ArrayList<>(), customerId, 0.0);
         when(basketService.getBasketInfo(customerId)).thenReturn(basketInfo);
 
-        this.mockMvc.perform(MockMvcRequestBuilders.get("/basket/"+customerId+"/calculateBasket")
+        this.mockMvc.perform(MockMvcRequestBuilders.get("/basket/" + customerId + "/calculateBasket")
                         .contentType("application" +
                                 "/json"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.basketItemList", Matchers.empty() ))
+                .andExpect(jsonPath("$.basketItemList", Matchers.empty()))
                 .andExpect(jsonPath("$.customerId").value("1"))
                 .andExpect(jsonPath("$.totalPrice").value("0.0"));
     }

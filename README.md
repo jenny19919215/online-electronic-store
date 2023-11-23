@@ -1,7 +1,7 @@
 # Online-electronic-store
 
-This is a poc of an online electronic store project based on spring boot.
-Optimistic lock solution has been implemented when add/remove items from basket to avoid concurrent read/write.
+This is a poc of an online electronic store back end project based on spring boot.
+Optimistic lock solution has been implemented when add/remove items from basket to avoid concurrent read/write issue.
 
 Project requirement can be found in
 file [Bullish Technical Assessment (Take home).pdf](./Bullish%20Technical%20Assessment%20(Take%20home).pdf)
@@ -28,10 +28,13 @@ mvn clean install
 docker build -t jenny19919215/electronic-store.jar:latest -f Dockerfile .
 ```
 
-* Or pull image from docker repo
-*
+* Or docker image has been pushed to docker hub, you can pull image from docker public hub
 
-* Run
+```
+docker pull jenny19919215/electronic-store.jar
+```
+
+* Then run
 
 ```
 docker run -p 8080:8080 jenny19919215/electronic-store.jar
@@ -59,7 +62,6 @@ curl --location 'localhost:8080/product'
 curl --location 'localhost:8080/product/create' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Basic YWRtaW46MTIzNDU2' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A' \
 --data '{
     "productName": "pad",
     "description": "it is a pad",
@@ -72,13 +74,13 @@ curl --location 'localhost:8080/product/create' \
 }'
 ```
 
-* update product discount percentage to 40% by product id = 1 only authorized by admin
+* update product discount percentage to 40% for second product by product id = 1 only authorized by admin
 
 ```
 curl --location --request PUT 'localhost:8080/product/1/update-discount' \
 --header 'Content-Type: application/json' \
 --header 'Authorization: Basic YWRtaW46MTIzNDU2' \
---header 'Cookie: JSESSIONID=04AAA7FFAF5C02204E410046DAD67727' \
+--header 'Cookie: JSESSIONID=167C38BD7848E1401B052F72D2F5213F' \
 --data '40'
 ```
 
@@ -87,7 +89,7 @@ curl --location --request PUT 'localhost:8080/product/1/update-discount' \
 ```
 curl --location --request DELETE 'localhost:8080/product/2' \
 --header 'Authorization: Basic YWRtaW46MTIzNDU2' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A'
+--header 'Cookie: JSESSIONID=167C38BD7848E1401B052F72D2F5213F'
 ```
 
 ### Basket endpoints
@@ -95,8 +97,7 @@ curl --location --request DELETE 'localhost:8080/product/2' \
 * get all basket items from basket for customer id = 1
 
 ```
-curl --location 'localhost:8080/basket/1/items' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A'
+curl --location 'localhost:8080/basket/1/items'
 ```
 
 * add 5 products whose id =1 to basket of customer id =1
@@ -104,7 +105,6 @@ curl --location 'localhost:8080/basket/1/items' \
 ```
 curl --location 'localhost:8080/basket/1/add-to-basket/1' \
 --header 'Content-Type: application/json' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A' \
 --data '5'
 ```
 
@@ -113,15 +113,13 @@ curl --location 'localhost:8080/basket/1/add-to-basket/1' \
 ```
 curl --location 'localhost:8080/basket/1/remove-from-basket/1' \
 --header 'Content-Type: application/json' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A' \
---data '1'
+--data '2'
 ```
 
 * calculate receipt detail for basket of customer id = 1
 
 ```
-curl --location 'localhost:8080/basket/1/calculateBasket' \
---header 'Cookie: JSESSIONID=61C867076B3D8F2C64419A38FEFB9B2A'
+curl --location 'localhost:8080/basket/1/calculateBasket'
 ```
 
 You can find more details by http://localhost:8080/swagger-ui/index.html

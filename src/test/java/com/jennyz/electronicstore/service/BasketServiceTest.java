@@ -2,7 +2,9 @@ package com.jennyz.electronicstore.service;
 
 import com.jennyz.electronicstore.dto.BasketInfo;
 import com.jennyz.electronicstore.entity.BasketItem;
+import com.jennyz.electronicstore.entity.BasketItemId;
 import com.jennyz.electronicstore.entity.Product;
+import com.jennyz.electronicstore.exception.BasketItemNotFoundException;
 import com.jennyz.electronicstore.exception.NotEnoughStockException;
 import com.jennyz.electronicstore.exception.ProductNotFoundException;
 import com.jennyz.electronicstore.repo.BasketItemRepository;
@@ -122,6 +124,15 @@ class BasketServiceTest {
     }
 
     @Test
+    void remove_basket_item_not_exist_to_basket_failed() {
+        when(productService.findProduct(product_not_found.getId())).thenReturn(Optional.of(product_not_found));
+        when(basketItemRepository.findById(new BasketItemId(product_not_found.getId(), 1L))).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> basketService.removeItemsFromBasket(product_not_found.getId(), 1L, 5)).isInstanceOf(BasketItemNotFoundException.class);
+
+    }
+
+
+    @Test
     void remove_product_with_illegal_number_to_basket_failed() {
         int num = basketItem.getProductCount() + 1;
         when(productService.findProduct(product_exist_with_discount.getId())).thenReturn(Optional.of(product_exist_with_discount));
@@ -169,28 +180,6 @@ class BasketServiceTest {
         verify(basketItemRepository, times(1)).save(any());
 
     }
-
-   /* @Test
-    void delete_basket_item_by_null_id() {
-        assertThatThrownBy(() -> basketService.deleteBasketItemById(null)).isInstanceOf(IllegalArgumentException.class);
-    }
-    @Test
-    void delete_basket_item_by_id_not_exist() {
-        BasketItemId id = new BasketItemId(1234L,2456L);
-        doThrow(EmptyResultDataAccessException.class).when(basketItemRepository).deleteById(id);
-        assertThatThrownBy(() -> basketService.deleteBasketItemById(id)).isInstanceOf(BasketItemNotFoundException
-        .class);
-    }
-
-
-    @Test
-    void delete_basket_item_by_id_ok() {
-        BasketItemId id = new BasketItemId(1L,1L);
-        doNothing().when(basketItemRepository).deleteById(id);
-        basketService.deleteBasketItemById(id);
-
-        verify(basketItemRepository,times(1)).deleteById(id);
-    }*/
 
 
     @Test
