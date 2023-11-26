@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-class BasketControllerIT {
+class BasketControllerITTest {
     private static final ObjectMapper om = new ObjectMapper();
 
     @Autowired
@@ -96,7 +96,7 @@ class BasketControllerIT {
         Long id = 1L;
       /*  when(basketService.addItemsToBasket(anyLong(),anyLong(),anyInt())).thenReturn(new BasketItem(id,id,number,
                40.0, 0));*/
-        Product product = new Product("phone", 100.0, 100.0, 20, Category.MOBILES, 1L);
+        Product product = new Product("watch", 100.0, 100.0, 20, Category.MOBILES, 1L);
         product.setDiscountPercentage(20);
         productService.insertProduct(product);
 

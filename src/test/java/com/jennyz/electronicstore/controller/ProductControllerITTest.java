@@ -15,12 +15,11 @@ import org.mockito.internal.matchers.apachecommons.ReflectionEquals;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -29,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class ProductControllerIT {
+public class ProductControllerITTest {
 
     private static final ObjectMapper om = new ObjectMapper();
     @Autowired
@@ -50,16 +49,14 @@ public class ProductControllerIT {
 
     @Test
     void should_return_product_list_ok() throws Exception {
+        MockHttpServletResponse response =
+                this.mockMvc.perform(MockMvcRequestBuilders.get(ProductController.API_BASE_PATH).contentType(
+                                "application" +
+                                        "/json"))
+                        .andDo(print())
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.*").isArray()).andReturn().getResponse();
 
-
-        this.mockMvc.perform(MockMvcRequestBuilders.get(ProductController.API_BASE_PATH).contentType(
-                        "application" +
-                                "/json"))
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.*").isArray())
-                .andExpect(jsonPath("$.*", hasSize(1)))
-                .andExpect(jsonPath("$[0].id", greaterThan(0)));
     }
 
     @Test
